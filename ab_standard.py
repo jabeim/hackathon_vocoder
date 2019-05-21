@@ -7,8 +7,8 @@ Created on Mon Apr 22 11:29:54 2019
 import numpy as np
 import scipy as sp
 from scipy import io as sio
-from vocoder_tools import ActivityToPower
-from NeurToBinMatrix import NeurToBinMatrix
+from vocoder_tools import ActivityToPower, NeurtoBinMatrix
+
 
 def vocoder(fileName,**kwargs):
 
@@ -191,11 +191,11 @@ def vocoder(fileName,**kwargs):
         activity = np.maximum(0,np.minimum(np.exp(-nl+nl*electricField),1)-np.exp(-nl))/(1-np.exp(-nl))
         
 #         Neural activity to audio power       
-        for k in range(blkSize):
-            audioPwr[:,k+1] = np.maximum(audioPwr[:,k]*alpha+activity[:,k]*(1-alpha),activity[:,k])            
-        audioPwr[:,0] = audioPwr[:,blkSize]
+#        for k in range(blkSize):
+#            audioPwr[:,k+1] = np.maximum(audioPwr[:,k]*alpha+activity[:,k]*(1-alpha),activity[:,k])            
+#        audioPwr[:,0] = audioPwr[:,blkSize]
 
-#        audioPwr = ActivityToPower(alpha,activity,audioPwr,blkSize)
+        audioPwr = ActivityToPower(alpha,activity,audioPwr,blkSize)
         
         
         # Average energy
