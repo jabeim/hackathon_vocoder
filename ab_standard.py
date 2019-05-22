@@ -7,7 +7,7 @@ Created on Mon Apr 22 11:29:54 2019
 import numpy as np
 import scipy as sp
 from scipy import io as sio
-from vocoder_tools import ActivityToPower, NeurtoBinMatrix
+from vocoder_tools import ActivityToPower, NeurToBinMatrix
 
 
 def vocoder(fileName,**kwargs):
