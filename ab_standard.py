@@ -6,7 +6,8 @@ Created on Mon Apr 22 11:29:54 2019
 """
 import numpy as np
 import scipy as sp
-from scipy import io as sio
+from scipy.io.wavfile import write as wavwrite
+import scipy.io as sio
 from vocoder_tools import ActivityToPower, NeurToBinMatrix
 
 
@@ -24,7 +25,6 @@ def vocoder(fileName,**kwargs):
     tauEnvMS = kwargs.get('tauEnvMS',10)
     nl =kwargs.get('nl',8)
     outFileName = kwargs.get('outFileName',fileName+'_voc.wav')
-    showDetails = kwargs.get('showDetails',False)
 
 
     
@@ -47,7 +47,7 @@ def vocoder(fileName,**kwargs):
 # load electric field spread data
     if spread is None:
         elecPlacement = np.zeros(nElec).astype(int) # change to zeros to reflect python indexing
-        spreadFile = 'C:/Users/Jbeim/Vocoder/spread.mat'
+        spreadFile = 'spread.mat'
         spread = sio.loadmat(spreadFile)
     else: # This seciont may need reindexing if the actual spread mat data is passed through, for now let use the spread.mat data
         elecPlacement = spread['elecPlacement']
@@ -58,11 +58,7 @@ def vocoder(fileName,**kwargs):
                 np.log2(np.linspace(150,850,40)),
                 np.linspace(np.log2(870),np.log2(8000),260)
                 )
-        
-        x = np.linspace(1,neuralLocsOct.size,nNeuralLocs)
-        xp = np.arange(1,neuralLocsOct.size+1)
-        fp = neuralLocsOct
-        
+
     neuralLocsOct = np.interp(
             np.linspace(1,neuralLocsOct.size,nNeuralLocs),
             np.arange(1,neuralLocsOct.size+1),
@@ -190,11 +186,7 @@ def vocoder(fileName,**kwargs):
 #        electricField = electricField/ 0.4
         activity = np.maximum(0,np.minimum(np.exp(-nl+nl*electricField),1)-np.exp(-nl))/(1-np.exp(-nl))
         
-#         Neural activity to audio power       
-#        for k in range(blkSize):
-#            audioPwr[:,k+1] = np.maximum(audioPwr[:,k]*alpha+activity[:,k]*(1-alpha),activity[:,k])            
-#        audioPwr[:,0] = audioPwr[:,blkSize]
-
+#         Neural activity to audio power
         audioPwr = ActivityToPower(alpha,activity,audioPwr,blkSize)
         
         
@@ -223,4 +215,7 @@ def vocoder(fileName,**kwargs):
             stateHolder = np.concatenate((stateHolder[playOverAvgRatio*nAvg:None],np.zeros(playOverAvgRatio*nAvg)))
             shli = np.int(0)
             
+            audioNorm = audioOut
+            wavData = (audioNorm*2147483647).astype(int) 
+            wavwrite(outFileName,audioFs.astype(int),wavData)
     return audioOut

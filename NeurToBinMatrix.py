@@ -31,7 +31,7 @@ def NeurToBinMatrix(neuralLocsOct,nFFT,Fs):
         I[k] = np.argmin(tmp)
         mNeurToBin[I[k].astype(int),k] = 1
         
-    pFN = 'C:/Users/Jbeim/Vocoder/preemph.mat'
+    pFN = 'preemph.mat'
     emph = sp.io.loadmat(pFN)
     
     I = np.argmax(emph['emphDb'])

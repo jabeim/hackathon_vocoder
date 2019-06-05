@@ -23,8 +23,7 @@ def vocoder(fileName,**kwargs):
     tauEnvMS = kwargs.get('tauEnvMS',10)
     nl =kwargs.get('nl',8)
     outFileName = kwargs.get('outFileName',fileName+'_voc.wav')
-    nCarriers = kwargs.get('nCarriers',20)
-    playAudio = kwargs.get('playAudio',False)   
+    nCarriers = kwargs.get('nCarriers',20)   
     
 #%% Load .matfile of electrode recording and format data    
     matData = sio.loadmat(fileName)
@@ -45,7 +44,7 @@ def vocoder(fileName,**kwargs):
 # load electric field spread data
     if spread is None:
         elecPlacement = np.zeros(nElec).astype(int) # change to zeros to reflect python indexing
-        spreadFile = 'C:/Users/Jbeim/Vocoder/spread.mat'
+        spreadFile = 'spread.mat'
         spread = sio.loadmat(spreadFile)
     else: # This seciont may need reindexing if the actual spread mat data is passed through, for now let use the spread.mat data
         elecPlacement = spread['elecPlacement']
@@ -56,10 +55,6 @@ def vocoder(fileName,**kwargs):
                 np.log2(np.linspace(150,850,40)),
                 np.linspace(np.log2(870),np.log2(8000),260)
                 )
-        
-        x = np.linspace(1,neuralLocsOct.size,nNeuralLocs)
-        xp = np.arange(1,neuralLocsOct.size+1)
-        fp = neuralLocsOct
         
     neuralLocsOct = np.interp(
             np.linspace(1,neuralLocsOct.size,nNeuralLocs),
@@ -178,7 +173,6 @@ def vocoder(fileName,**kwargs):
                 elData[iChan,iTime] = 0
                 
     fftFreqs = np.arange(1,np.floor(nFFT/2)+1)*audioFs/nFFT
-    fftFreqsOct = np.log2(fftFreqs)
 #%% Loop TODO: Try to split or optimize double loop for speed
     for blkNumber in range(1,(np.floor(elData.shape[1]/blkSize).astype(int))+1):
         # charge to electric field
@@ -190,16 +184,10 @@ def vocoder(fileName,**kwargs):
         
         # Normalized EF to neural activity
 #        nl = 5    
-#        electricField = electricField/ 0.4
+        electricField = electricField/ 0.4
         activity = np.maximum(0,np.minimum(np.exp(-nl+nl*electricField),1)-np.exp(-nl))/(1-np.exp(-nl))
         
-        
-        
 #        Neural activity to audio power       
-#        for k in range(blkSize):
-#            audioPwr[:,k+1] = np.maximum(audioPwr[:,k]*alpha+activity[:,k]*(1-alpha),activity[:,k])            
-#        audioPwr[:,0] = audioPwr[:,blkSize]
-
         audioPwr = ActivityToPower(alpha,activity,audioPwr,blkSize)  # JIT optimized inner loop
         
         
