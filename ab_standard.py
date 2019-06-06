@@ -6,8 +6,9 @@ Created on Mon Apr 22 11:29:54 2019
 """
 import numpy as np
 import scipy as sp
-from scipy.io.wavfile import write as wavwrite
 import scipy.io as sio
+from mat4py import loadmat as loadmatstruct
+from scipy.io.wavfile import write as wavwrite
 from vocoder_tools import ActivityToPower, NeurToBinMatrix
 
 
@@ -24,18 +25,24 @@ def vocoder(fileName,**kwargs):
     tPlay = kwargs.get('tPlay',None)
     tauEnvMS = kwargs.get('tauEnvMS',10)
     nl =kwargs.get('nl',8)
-    outFileName = kwargs.get('outFileName',fileName+'_voc.wav')
+    resistorValue = kwargs.get('resistorVal',2)
+    outFileName = kwargs.get('outFileName','Hackathon_scope_demo/'+fileName+'standard_voc.wav')
 
 
     
 #%% Load .matfile of electrode recording and format data    
-    matData = sio.loadmat(fileName)
-    resistorValue = 2
-    nElec = matData['electrodeAmp'].shape[0]-1
+#    matData = sio.loadmat(fileName+'.mat')
+    matData = loadmatstruct('Hackathon_scope_demo/'+fileName+'.scope')
+    matData = matData['S']
+#%%
+    electrodeAmp = np.array(matData['electrodeAmp'])
+        
+#    resistorValue = 2
+    nElec = electrodeAmp.shape[0]-1
     captFs = int(matData['SampleRate'])
     captTs = 1/captFs
-    scaletoMuA = 500/resistorValue
-    elData = np.flipud(matData['electrodeAmp'][1:,:])*scaletoMuA
+    scaletoMuA = 1000/resistorValue
+    elData = np.flipud(electrodeAmp[1:,:])*scaletoMuA
 # compute electrode locations in terms of frequency 
     if elecFreqs is None:
         elecFreqs = np.logspace(np.log10(381.5),np.log10(5046.4),nElec)
@@ -72,20 +79,20 @@ def vocoder(fileName,**kwargs):
     if MCLmuA is None:
         MCLmuA = 500*np.ones(nElec)*1.2
     else:
-        if MCLmuA.size == nElec:
+        if (type(MCLmuA) == int) or (type(MCLmuA)== float):
+            MCLmuA = np.ones(nElec)*MCLmuA*1.2            
+        elif (type(MCLmuA) == 'numpy.ndarray') and (MCLmuA.size == nElec):
             MCLmuA = MCLmuA * 1.2
-        elif MCLmuA.size == 1:
-            MCLmuA = np.ones(nElec)*MCLmuA*1.2
         else:
             raise ValueError('Wrong number of M levels!')
             
     if TmuA is None:
         TmuA = 50*np.ones(nElec)
     else:
-        if TmuA.size == nElec:
-            TmuA = TmuA            
-        elif TmuA.size == 1:
-            TmuA = np.ones(nElec)*TmuA
+        if (type(TmuA) == int) or (type(TmuA)== float):
+            TmuA = np.ones(nElec)*TmuA                   
+        elif (type(TmuA) == 'numpy.ndarray') and (TmuA.size == nElec):
+            TmuA = TmuA
         else:
             raise ValueError('Wrong Number of T levels!')
             
@@ -215,7 +222,7 @@ def vocoder(fileName,**kwargs):
             stateHolder = np.concatenate((stateHolder[playOverAvgRatio*nAvg:None],np.zeros(playOverAvgRatio*nAvg)))
             shli = np.int(0)
             
-            audioNorm = audioOut
-            wavData = (audioNorm*2147483647).astype(int) 
-            wavwrite(outFileName,audioFs.astype(int),wavData)
-    return audioOut
+        audioNorm = audioOut
+        wavData = (audioNorm*(2**32-1)).astype(np.int32) 
+        wavwrite(outFileName,audioFs.astype(int),wavData)
+    return (audioOut,audioFs)

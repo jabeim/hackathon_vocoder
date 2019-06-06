@@ -6,11 +6,16 @@ Created on Mon Apr 22 11:29:54 2019
 """
 import numpy as np
 import scipy as sp
-from scipy import io as sio
-from vocoder_tools import ActivityToPower
-from NeurToBinMatrix import generate_cfs, NeurToBinMatrix
-def vocoder(fileName,**kwargs):
+import scipy.io as sio
+from mat4py import loadmat as loadmatstruct
+from scipy.io.wavfile import write as wavwrite
+from vocoder_tools import ActivityToPower, NeurToBinMatrix, generate_cfs
 
+
+
+def vocoder(fileName,**kwargs):
+    
+    nCarriers = kwargs.get('nCarriers',20)   
     elecFreqs = kwargs.get('elecFreqs',None)
     spread = kwargs.get('spread',None)
     neuralLocsOct = kwargs.get('neuralLocsOct',None)
@@ -22,17 +27,23 @@ def vocoder(fileName,**kwargs):
     tPlay = kwargs.get('tPlay',None)
     tauEnvMS = kwargs.get('tauEnvMS',10)
     nl =kwargs.get('nl',8)
-    outFileName = kwargs.get('outFileName',fileName+'_voc.wav')
-    nCarriers = kwargs.get('nCarriers',20)   
+    resistorValue = kwargs.get('resistorVal',2)
+    outFileName = kwargs.get('outFileName','Hackathon_scope_demo/'+fileName+'hybrid_voc.wav')
+    
     
 #%% Load .matfile of electrode recording and format data    
-    matData = sio.loadmat(fileName)
-    resistorValue = 2
-    nElec = matData['electrodeAmp'].shape[0]-1
+#    matData = sio.loadmat(fileName)
+    
+    matData = loadmatstruct('Hackathon_scope_demo/'+fileName+'.scope')
+    matData = matData['S']
+    electrodeAmp = np.array(matData['electrodeAmp'])
+    
+#    resistorValue = 2
+    nElec = electrodeAmp.shape[0]-1
     captFs = float(matData['SampleRate'])
     captTs = 1/captFs
-    scaletoMuA = 500/resistorValue
-    elData = np.flipud(matData['electrodeAmp'][1:,:])*scaletoMuA
+    scaletoMuA = 1000/resistorValue
+    elData = np.flipud(electrodeAmp[1:,:])*scaletoMuA
 # compute electrode locations in terms of frequency 
     if elecFreqs is None:
         elecFreqs = np.logspace(np.log10(381.5),np.log10(5046.4),nElec)
@@ -69,20 +80,20 @@ def vocoder(fileName,**kwargs):
     if MCLmuA is None:
         MCLmuA = 500*np.ones(nElec)*1.2
     else:
-        if MCLmuA.size == nElec:
+        if (type(MCLmuA) == int) or (type(MCLmuA)== float):
+            MCLmuA = np.ones(nElec)*MCLmuA*1.2            
+        elif (type(MCLmuA) == 'numpy.ndarray') and (MCLmuA.size == nElec):
             MCLmuA = MCLmuA * 1.2
-        elif MCLmuA.size == 1:
-            MCLmuA = np.ones(nElec)*MCLmuA*1.2
         else:
             raise ValueError('Wrong number of M levels!')
             
     if TmuA is None:
         TmuA = 50*np.ones(nElec)
     else:
-        if TmuA.size == nElec:
-            TmuA = TmuA            
-        elif TmuA.size == 1:
-            TmuA = np.ones(nElec)*TmuA
+        if (type(TmuA) == int) or (type(TmuA)== float):
+            TmuA = np.ones(nElec)*TmuA                   
+        elif (type(TmuA) == 'numpy.ndarray') and (TmuA.size == nElec):
+            TmuA = TmuA
         else:
             raise ValueError('Wrong Number of T levels!')
             
@@ -184,7 +195,7 @@ def vocoder(fileName,**kwargs):
         
         # Normalized EF to neural activity
 #        nl = 5    
-        electricField = electricField/ 0.4
+#        electricField = electricField/ 0.4
         activity = np.maximum(0,np.minimum(np.exp(-nl+nl*electricField),1)-np.exp(-nl))/(1-np.exp(-nl))
         
 #        Neural activity to audio power       
@@ -206,7 +217,7 @@ def vocoder(fileName,**kwargs):
         
 #%% Method 3 interpolated spectral envelope filtering
     
-    specVec = np.arange(600)*nFFT/2
+    specVec = np.arange(blkNumber)*nFFT/2
     newTimeVec = np.arange(nBlocks-(nFFT/2-1))
     interpSpect2 = np.zeros((len(toneFreqs),len(newTimeVec)),dtype=complex)
     modTones = np.zeros(interpSpect2.shape)
@@ -220,8 +231,10 @@ def vocoder(fileName,**kwargs):
        
     audioOut = np.sum(modTones,axis=0)
 
-
+    audioNorm = audioOut
+    wavData = (audioNorm*(2**32-1)).astype(np.int32) 
+    wavwrite(outFileName,audioFs.astype(int),wavData)
 # Return wavdata
      
            
-    return(audioOut)
+    return(audioOut,audioFs)
