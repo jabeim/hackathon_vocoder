@@ -231,9 +231,9 @@ def vocoder(fileName,**kwargs):
        
     audioOut = np.sum(modTones,axis=0)
 
-    audioNorm = audioOut
-    wavData = (audioNorm*(2**32-1)).astype(np.int32) 
-    wavwrite(outFileName,audioFs.astype(int),wavData)
+#    audioNorm = audioOut
+#    wavData = (audioNorm*(2**32-1)).astype(np.int32) 
+#    wavwrite(outFileName,audioFs.astype(int),wavData)
 # Return wavdata
      
            

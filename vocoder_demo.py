@@ -10,7 +10,6 @@ Created on Wed May  1 14:05:45 2019
 import numpy as np
 import pyaudio as pa
 from scipy.signal import resample
-from matplotlib.pyplot import plot
 from scipy.io.wavfile import read
 from ab_standard import vocoder as standard_voc
 from ab_spiral import vocoder as hybrid_voc
@@ -24,7 +23,7 @@ playAudio = False
 fileLoc = 'Hackathon_scope_demo/'
 nlVal = 5
 for fNum in nums:
-    fn = 'ScopeData_17-May-2019_'+fNum.astype(str)
+    fn = 'ScopeData_17-May-2019_'+fNum.astype(str)  
     wavN = 'MOD_MP_1_'+fNum.astype(str)
     #%% Process and visualize data
     

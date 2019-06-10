@@ -148,10 +148,10 @@ def vocoder(fileName,**kwargs):
     shli = np.int(0)
     
 #    random phase
-#    phs = 2*np.pi*np.random.rand(np.floor(nFFT/2).astype(int))
+    phs = 2*np.pi*np.random.rand(np.floor(nFFT/2).astype(int))
     
-    phsDat = sio.loadmat('phs.mat')  # load predefined random phase for comparison
-    phs = phsDat['phs'][:,0]    
+#    phsDat = sio.loadmat('phs.mat')  # load predefined random phase for comparison
+#    phs = phsDat['phs'][:,0]    
     dphi = 2*np.pi*np.arange(1,np.floor(nFFT/2)+1)*nAvg/nFFT
     
     audioPwr = np.zeros((nNeuralLocs,blkSize+1))
@@ -222,7 +222,7 @@ def vocoder(fileName,**kwargs):
             stateHolder = np.concatenate((stateHolder[playOverAvgRatio*nAvg:None],np.zeros(playOverAvgRatio*nAvg)))
             shli = np.int(0)
             
-        audioNorm = audioOut
-        wavData = (audioNorm*(2**32-1)).astype(np.int32) 
-        wavwrite(outFileName,audioFs.astype(int),wavData)
+#        audioNorm = audioOut
+#        wavData = (audioNorm*(2**32-1)).astype(np.int32) 
+#        wavwrite(outFileName,audioFs.astype(int),wavData)
     return (audioOut,audioFs)
