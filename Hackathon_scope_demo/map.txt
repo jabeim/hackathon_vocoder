@@ -1,9 +1,0 @@
-15 channel 
-F120-S
-CV off, SV off
-PW 35.8
-M = 250
-T = 25
-IDR 50
-RF strength 15
-Aux only
