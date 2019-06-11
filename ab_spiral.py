@@ -23,7 +23,7 @@ def vocoder(fileName,**kwargs):
     MCLmuA = kwargs.get('MCLmuA',None)
     TmuA = kwargs.get('TmuA',None)
     tAvg = kwargs.get('tAvg',.005)
-    audioFs = kwargs.get('audioFs',44100)
+    audioFs = kwargs.get('audioFs',48000)
     tPlay = kwargs.get('tPlay',None)
     tauEnvMS = kwargs.get('tauEnvMS',10)
     nl =kwargs.get('nl',8)
