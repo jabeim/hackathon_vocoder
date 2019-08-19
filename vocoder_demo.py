@@ -18,8 +18,9 @@ from ab_spiral import vocoder as hybrid_voc
 Fs = 44100
 
 
-nums = np.arange(1,11)
-playAudio = False
+#nums = np.arange(1,11)
+nums = np.arange(1,2)
+playAudio = True
 fileLoc = 'Hackathon_scope_demo/'
 nlVal = 5
 for fNum in nums:
